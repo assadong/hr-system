@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HR Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <h1 class="text-3xl font-bold mb-6">HR Dashboard - สรุปยอดวันนี้</h1>
+    <div id="loading" class="text-xl">กำลังดึงข้อมูล...</div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden" id="stats">
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+            <p class="text-gray-500">มาทำงานทั้งหมด</p>
+            <p id="total" class="text-4xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+            <p class="text-gray-500">ปกติ</p>
+            <p id="normal" class="text-4xl font-bold">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+            <p class="text-gray-500">มาสาย</p>
+            <p id="late" class="text-4xl font-bold">0</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyGGP4rK9Elpf15N9lcIEellSBvdUsM_fbRGkDAbQ_s7IAsxJxKsR_ClqUCrdWayA37gA/exec?action=getSummary";
+
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('total').innerText = data.total;
+                document.getElementById('normal').innerText = data.normal;
+                document.getElementById('late').innerText = data.late;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('stats').classList.remove('hidden');
+            });
+    </script>
+</body>
+</html>
