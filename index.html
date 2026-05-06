@@ -1,95 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HR Check-in</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- ดึง LINE SDK มาใช้เพื่อให้คุยกับแอป Line ได้ -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Check-in System</title>
+    <!-- ใช้ Tailwind CSS สำหรับความสวยงาม -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เชื่อมต่อ LINE LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-  <div class="max-w-md mx-auto p-6">
-    <!-- ส่วนหัว Profile -->
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 text-center">
-      <img id="pictureUrl" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-green-500" src="https://via.placeholder.com/150">
-      <h2 id="displayName" class="text-xl font-bold text-gray-800">กำลังโหลดข้อมูล...</h2>
-      <p id="userId" class="text-sm text-gray-400"></p>
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">ระบบบันทึกเวลาทำงาน</h1>
+        
+        <!-- ส่วนแสดงโปรไฟล์พนักงาน -->
+        <div id="profile" class="mb-8 hidden">
+            <img id="pictureUrl" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-blue-500">
+            <p class="text-lg font-medium text-gray-700">สวัสดีคุณ</p>
+            <p id="displayName" class="text-xl font-bold text-blue-600"></p>
+        </div>
+
+        <!-- ปุ่มกดเช็คอิน -->
+        <button id="btnCheckIn" onclick="getLocation()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg transition duration-300 shadow-lg mb-4">
+            📍 กดเพื่อลงเวลา (CHECK-IN)
+        </button>
+
+        <p id="status" class="text-sm text-gray-500 mt-4"></p>
     </div>
 
-    <!-- ปุ่มลงเวลา -->
-    <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
-      <div id="status-box" class="mb-6 p-4 rounded-xl bg-gray-50">
-        <p id="location-status" class="text-gray-600">กรุณากดปุ่มเพื่อลงเวลา</p>
-      </div>
+    <script>
+        // === [ ส่วนที่คุณต้องแก้ไข 2 จุดนี้ ] ===
+        const WEB_APP_URL = "ใhttps://script.google.com/macros/s/AKfycbyGGP4rK9Elpf15N9lcIEellSBvdUsM_fbRGkDAbQ_s7IAsxJxKsR_ClqUCrdWayA37gA/exec";
+        const LIFF_ID = "2009987493-rqSb645T";
+        // ===================================
 
-      <button onclick="handleCheckIn()" id="btn-checkin" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg transition-all active:scale-95">
-        CHECK-IN
-      </button>
-    </div>
-  </div>
-
-  <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyGGP4rK9Elpf15N9lcIEellSBvdUsM_fbRGkDAbQ_s7IAsxJxKsR_ClqUCrdWayA37gA/exec";
-
-    // 1. เริ่มการทำงานของ LIFF
-    async function main() {
-      await liff.init({ liffId: "2009987493-rqSb645T" });
-      if (liff.isLoggedIn()) {
-        const profile = await liff.getProfile();
-        document.getElementById("displayName").innerText = profile.displayName;
-        document.getElementById("pictureUrl").src = profile.pictureUrl;
-        document.getElementById("userId").innerText = "ID: " + profile.userId;
-      } else {
-        liff.login();
-      }
-    }
-    main();
-
-    // 2. ฟังก์ชันจัดการเมื่อกดปุ่ม Check-in
-    function handleCheckIn() {
-      document.getElementById("btn-checkin").innerText = "กำลังบันทึก...";
-      document.getElementById("btn-checkin").disabled = true;
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(sendData, handleError);
-      } else {
-        alert("เบราว์เซอร์ของคุณไม่รองรับ GPS");
-      }
-    }
-
-    // 3. ส่งข้อมูลไปที่ Google Sheets
-    async function sendData(position) {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const profile = await liff.getProfile();
-
-      const payload = {
-        action: 'checkIn',
-        lineId: profile.userId,
-        name: profile.displayName,
-        location: lat + "," + lng,
-        type: 'IN'
-      };
-
-      fetch(WEB_APP_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(response => {
-        if(response.result === 'success') {
-          alert("ลงเวลาสำเร็จ!");
-          liff.closeWindow(); // ปิดหน้าจอ LIFF เมื่อเสร็จ
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    getUserProfile();
+                } else {
+                    liff.login();
+                }
+            } catch (error) {
+                console.error("LIFF Init Error", error);
+            }
         }
-      })
-      .catch(error => alert("เกิดข้อผิดพลาด: " + error));
-    }
 
-    function handleError(error) {
-      alert("ไม่สามารถเข้าถึงพิกัดได้ กรุณาเปิด GPS");
-    }
-  </script>
+        async function getUserProfile() {
+            const profile = await liff.getProfile();
+            document.getElementById("profile").classList.remove("hidden");
+            document.getElementById("displayName").innerText = profile.displayName;
+            document.getElementById("pictureUrl").src = profile.pictureUrl;
+        }
+
+        function getLocation() {
+            const statusText = document.getElementById("status");
+            statusText.innerText = "กำลังดึงพิกัด GPS...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendData, (err) => {
+                    statusText.innerText = "เกิดข้อผิดพลาด: โปรดเปิด GPS และอนุญาตสิทธิ์";
+                });
+            } else {
+                statusText.innerText = "เบราว์เซอร์ไม่รองรับ GPS";
+            }
+        }
+
+        async function sendData(position) {
+            const statusText = document.getElementById("status");
+            const btn = document.getElementById("btnCheckIn");
+            
+            btn.disabled = true;
+            btn.innerText = "กำลังบันทึกข้อมูล...";
+            
+            const profile = await liff.getProfile();
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            const payload = {
+                action: 'checkIn',
+                lineId: profile.userId,
+                name: profile.displayName,
+                location: `${lat},${lng}`,
+                type: 'IN'
+            };
+
+            try {
+                // ส่งข้อมูลไปที่ Google Sheets (ผ่าน Apps Script)
+                const response = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    statusText.innerText = "✅ บันทึกเวลาสำเร็จ!";
+                    btn.innerText = "บันทึกเรียบร้อย";
+                    btn.classList.replace("bg-blue-600", "bg-green-500");
+                    
+                    // ปิดหน้า LIFF อัตโนมัติใน 2 วินาที
+                    setTimeout(() => liff.closeWindow(), 2000);
+                }
+            } catch (error) {
+                statusText.innerText = "❌ เกิดข้อผิดพลาดในการส่งข้อมูล";
+                btn.disabled = false;
+                btn.innerText = "📍 กดเพื่อลงเวลา (CHECK-IN)";
+            }
+        }
+
+        main();
+    </script>
 </body>
 </html>
