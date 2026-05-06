@@ -81,12 +81,13 @@
             const lng = position.coords.longitude;
 
             const payload = {
-                action: 'checkIn',
-                lineId: profile.userId,
-                name: profile.displayName,
-                location: `${lat},${lng}`,
-                type: 'IN'
-            };
+    action: 'checkIn',
+    lineId: profile.userId,  // ตรวจสอบว่าใช้ lineId
+    name: profile.displayName,
+    location: `${lat},${lng}`,
+    type: 'IN',
+    status: 'ปกติ'
+};
 
             try {
                 // ส่งข้อมูลไปที่ Google Sheets (ผ่าน Apps Script)
