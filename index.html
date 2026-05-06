@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Check-in</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ดึง LINE SDK มาใช้เพื่อให้คุยกับแอป Line ได้ -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <div class="max-w-md mx-auto p-6">
+    <!-- ส่วนหัว Profile -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 text-center">
+      <img id="pictureUrl" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-green-500" src="https://via.placeholder.com/150">
+      <h2 id="displayName" class="text-xl font-bold text-gray-800">กำลังโหลดข้อมูล...</h2>
+      <p id="userId" class="text-sm text-gray-400"></p>
+    </div>
+
+    <!-- ปุ่มลงเวลา -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+      <div id="status-box" class="mb-6 p-4 rounded-xl bg-gray-50">
+        <p id="location-status" class="text-gray-600">กรุณากดปุ่มเพื่อลงเวลา</p>
+      </div>
+
+      <button onclick="handleCheckIn()" id="btn-checkin" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg transition-all active:scale-95">
+        CHECK-IN
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "ใส่_URL_ที่ได้จาก_Apps_Script_ตรงนี้";
+
+    // 1. เริ่มการทำงานของ LIFF
+    async function main() {
+      await liff.init({ liffId: "ใส่_LIFF_ID_ของคุณตรงนี้" });
+      if (liff.isLoggedIn()) {
+        const profile = await liff.getProfile();
+        document.getElementById("displayName").innerText = profile.displayName;
+        document.getElementById("pictureUrl").src = profile.pictureUrl;
+        document.getElementById("userId").innerText = "ID: " + profile.userId;
+      } else {
+        liff.login();
+      }
+    }
+    main();
+
+    // 2. ฟังก์ชันจัดการเมื่อกดปุ่ม Check-in
+    function handleCheckIn() {
+      document.getElementById("btn-checkin").innerText = "กำลังบันทึก...";
+      document.getElementById("btn-checkin").disabled = true;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(sendData, handleError);
+      } else {
+        alert("เบราว์เซอร์ของคุณไม่รองรับ GPS");
+      }
+    }
+
+    // 3. ส่งข้อมูลไปที่ Google Sheets
+    async function sendData(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const profile = await liff.getProfile();
+
+      const payload = {
+        action: 'checkIn',
+        lineId: profile.userId,
+        name: profile.displayName,
+        location: lat + "," + lng,
+        type: 'IN'
+      };
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(response => {
+        if(response.result === 'success') {
+          alert("ลงเวลาสำเร็จ!");
+          liff.closeWindow(); // ปิดหน้าจอ LIFF เมื่อเสร็จ
+        }
+      })
+      .catch(error => alert("เกิดข้อผิดพลาด: " + error));
+    }
+
+    function handleError(error) {
+      alert("ไม่สามารถเข้าถึงพิกัดได้ กรุณาเปิด GPS");
+    }
+  </script>
+</body>
+</html>
