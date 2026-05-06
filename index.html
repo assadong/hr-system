@@ -31,11 +31,11 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "ใส่_URL_ที่ได้จาก_Apps_Script_ตรงนี้";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyGGP4rK9Elpf15N9lcIEellSBvdUsM_fbRGkDAbQ_s7IAsxJxKsR_ClqUCrdWayA37gA/exec";
 
     // 1. เริ่มการทำงานของ LIFF
     async function main() {
-      await liff.init({ liffId: "ใส่_LIFF_ID_ของคุณตรงนี้" });
+      await liff.init({ liffId: "2009987493-rqSb645T" });
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         document.getElementById("displayName").innerText = profile.displayName;
